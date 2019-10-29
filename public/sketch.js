@@ -8,9 +8,12 @@ const CANVAS_WITDTH = 800;
 const TEXT_SIZE = 15;
 let Player1Score = 0;
 let Player2Score = 0;
+let player_num;
+let player;
+let players;
 function setup(){
-  Player1 = new player;
-  Player2 = new Opponent;
+  Player1 = new Left;
+  Player2 = new Right;
   createCanvas(CANVAS_WITDTH, CANVAS_HEIGHT);
   ball = new Ball; 
   for (let y = dSize/2; y<CANVAS_HEIGHT; y+=dSize*2) {
@@ -24,29 +27,47 @@ function draw(){
   fill(255,100);
   background(0);
   drawSqueres();
+  players = {1 : Player1, 2 : Player2}
   socket.onmessage = event => {
+    console.log(event);
     if(JSON.parse(event.data).setup){
       player_num = JSON.parse(event.data).setup;
+      // thre we indicate what player should we play
+      // when we connect server send setup message
+      // with number of player we play
+      // we read it and define player var
+      player = players[player_num];
     }
+
     else{
-      if (JSON.parse(event.data).player === 1){
-      Player1[JSON.parse(event.data).move]();
-  }}}
-  if (keyIsDown(DOWN_ARROW)){
-    Player1.down();
-    console.log('down')
-    socket.send(JSON.stringify({player: player_num, move: "down"}));
-  }
-  else if (keyIsDown(UP_ARROW)){
-    Player1.up();
-    console.log('up')
-    socket.send(JSON.stringify({player: player_num, move: "up"}));
-  }
+      // there we indicate what our oponent player number
+      // when oponent moves server send us info with oponent number
+      // and type of move
+      // so we can define oponent object
+      let oponent = players[JSON.parse(event.data).player] 
+      oponent[JSON.parse(event.data).move]();
+      oponent.update();
+      oponent.show();
+      oponent.stop();
+     }
+  };
+
+    if (keyIsDown(DOWN_ARROW)){
+      player.down();
+      socket.send(JSON.stringify({player: player_num, move: "down"}));
+    }
+
+    else if (keyIsDown(UP_ARROW)){
+      player.up();
+      socket.send(JSON.stringify({player: player_num, move: "up"}));
+    }
+
   Player1.show();
   ball.update();
   ball.show();
   Player1.update();
   drawScores();
+  Player2.update();
   Player2.show();
 
   function drawScores(){
@@ -74,6 +95,6 @@ function drawSqueres () {
 
 function keyReleased(){
   if((key == "W" || keyCode == UP_ARROW) || (key == "S" || keyCode == DOWN_ARROW)){
-    Player1.stop()
+    player.stop();
   }
 }

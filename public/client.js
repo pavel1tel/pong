@@ -6,11 +6,3 @@ socket.onopen = () => {
   socket.onclose = () => {
     console.log('closed');
   };
-  socket.onmessage = event => {
-    if(JSON.parse(event.data).setup){
-      player_num = JSON.parse(event.data).setup;
-    }
-    else{
-      Player1.down();
-    }
-  };

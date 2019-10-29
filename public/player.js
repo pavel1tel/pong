@@ -1,4 +1,4 @@
-function player (){
+function Left (){
   this.height = 80;
   this.weight = 15;
   this.pos = createVector(this.weight*2, CANVAS_HEIGHT/2 - this.height/2)
