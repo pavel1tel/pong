@@ -5,6 +5,8 @@ const http = require('http');
 const server = http.createServer(app);
 const Websocket = require('ws');
 const ws = new Websocket.Server({server, port:8000});
+const abs = Math.abs;
+let x, y;
 app.use(express.static('public'));
 
 
@@ -23,10 +25,25 @@ ws.on('connection', (ws) => {
   const player_num = clients.indexOf(ws) + 1;
   ws.send(JSON.stringify({setup: player_num}));
   ws.send(JSON.stringify({setup: player_num}));
+
+  let counter = 0;
+  clients.forEach((client) => {
+    if (client !== null){
+      counter += 1;
+    }
+  })
+  if (counter === 2){
+    do{
+      x = Math.random()*12-6;
+      y = Math.random()*12-6;
+    }while (abs(x) < 3 || abs(y) < 3);
+    clients.forEach((client) => {
+      client.send(JSON.stringify({start : true, ball : { x : x, y : y}}))
+    })
+  }
   if (ws.readyState === 1){
       
   ws.on('message', (message) => {
-    console.log(message);
     clients.forEach(client => {
       if (client !== null && client.readyState === 1 && client !== ws){
       client.send(message);
@@ -34,6 +51,11 @@ ws.on('connection', (ws) => {
 )})}
   ws.on("close", (reasonCode, description) => {
     clients[clients.indexOf(ws)] = null;
+    clients.forEach((client) => {
+      if (client !== null){
+        client.send(JSON.stringify({start : false, ball : { x : x, y : y}}))
+      }
+    })
   })
 });
 
