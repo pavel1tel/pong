@@ -1,65 +1,83 @@
+
+
+const { Player } = require("./Player.js");
+const { Ball } = require("./Ball.js")
 const express = require('express');
 const app = express();
+const port = 3000;
+let player_counter = 0;
+
+const server = app.listen(process.env.port || port, () => {
+  console.log('Server running on port ' + port);
+});
+
 const path = require('path');
-const http = require('http');
-const server = http.createServer(app);
-const Websocket = require('ws');
-const ws = new Websocket.Server({server, port:8000});
-const abs = Math.abs;
-let x, y;
+const io = require('socket.io').listen(server);
 app.use(express.static('public'));
+let SOCKET_LIST = {};
+let PLAYER_LIST = {};
+let ball = Ball();
+ball.setAcc();
 
 
 
-app.get('/',function(req, res){
+app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname+'/index.html'));
 });
 
-app.listen(process.env.port || 3000);
+
+io.on('connection', socket => {
+  console.log('a user connected');
+  socket.id = Math.random();
+  SOCKET_LIST[socket.id] = socket;
+  let ball = Ball();
+  let player = Player(socket.id, player_counter);
+  player_counter++;
+  PLAYER_LIST[player.id] = player;
+  socket.on('disconnect', () => {
+    delete SOCKET_LIST[socket.id];
+    delete PLAYER_LIST[player.id];
+  });
+
+  socket.on('keyPressed', (data) => {
+    if (data.inputId === 'down'){
+      player.pressingDown = data.state;
+    }else if (data.inputId === 'up'){
+      player.pressingUp = data.state;
+    };
+  });
+
+}); 
 
 
-const clients = [null,null];
-
-ws.on('connection', (ws) => {
-  clients[clients.indexOf(null)]= ws; 
-  const player_num = clients.indexOf(ws) + 1;
-  ws.send(JSON.stringify({setup: player_num}));
-  ws.send(JSON.stringify({setup: player_num}));
-
-  let counter = 0;
-  clients.forEach((client) => {
-    if (client !== null){
-      counter += 1;
-    }
-  })
-  if (counter === 2){
-    do{
-      x = Math.random()*12-6;
-      y = Math.random()*12-6;
-    }while (abs(x) < 3 || abs(y) < 3);
-    clients.forEach((client) => {
-      client.send(JSON.stringify({start : true, ball : { x : x, y : y}}))
+setInterval(() => {
+  let pack = {}; 
+  let pack_player = [];
+  for (let id in PLAYER_LIST){
+    let player = PLAYER_LIST[id];
+    ball.collision = () => {
+      let deltaX = ball.pos.x - Math.max(player.pos.x, Math.min(ball.pos.x, player.pos.x + player.width));
+      let deltaY = ball.pos.y - Math.max(player.pos.y, Math.min(ball.pos.y, player.pos.y + player.height));
+      if ((Math.pow(deltaX, 2) + Math.pow(deltaY, 2))< Math.pow(ball.radius, 2)){
+        ball.acc.x *= -1;
+      };
+    };
+    ball.collision();
+    player.updatePosition();
+    pack_player.push({
+      self : player,
     })
-  }
-  if (ws.readyState === 1){
-      
-  ws.on('message', (message) => {
-    clients.forEach(client => {
-      if (client !== null && client.readyState === 1 && client !== ws){
-      client.send(message);
-      }}
-)})}
-  ws.on("close", (reasonCode, description) => {
-    clients[clients.indexOf(ws)] = null;
-    clients.forEach((client) => {
-      if (client !== null){
-        client.send(JSON.stringify({start : false, ball : { x : x, y : y}}))
-      }
-    })
-  })
-});
+  };
+  if ( Object.keys(PLAYER_LIST).length >= 2 ) {
+    ball.start = true;
+  };
 
-
-
-console.log('Running at Port 8000');
-
+  
+  ball.out();
+  pack.players = pack_player;
+  pack.ball = ball.update();
+  for (let id in SOCKET_LIST){
+    let socket = SOCKET_LIST[id];
+    socket.emit('newPosition', pack);
+  };
+  }, 1000/40);
