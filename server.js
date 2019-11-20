@@ -25,6 +25,7 @@ app.get('/', (req, res) => {
 });
 
 
+
 Player.list = {};
 io.on('connection', socket => {
   socket.id = Math.random();
@@ -35,8 +36,9 @@ io.on('connection', socket => {
   player_counter++;
   Player.list[player.id] = player;
   Ball.player_list = Player.list;
-  socket.on('disconnect', () => {
-    player_counter = 0;
+
+  function restart() {
+  player_counter = 0;
     for ( let id in SOCKET_LIST ){
       let socket = SOCKET_LIST[id];
       socket.emit("Over");
@@ -45,6 +47,10 @@ io.on('connection', socket => {
     };
     player.onDisconnect();
     ball.reset();
+  };
+  
+  socket.on('disconnect', () => {
+    restart();
   });
 
   socket.on('keyPressed', (data) => {

@@ -5,6 +5,10 @@ const CANVAS_WITDTH = 800;
 const dSize = 10;
 const dots = [];
 
+function restart () {
+  console.log("restart");
+}
+
 function setup(){
   noStroke();
   fill(255,100);

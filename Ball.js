@@ -7,8 +7,8 @@ function Ball () {
     },
     radius : 20,
     speed : {
-      x : 20,
-      y : 15,
+      x : 25,
+      y : 20,
     },
     Player1Score : 0,
     Player2Score : 0,
@@ -76,6 +76,8 @@ function Ball () {
       x : 400,
       y : 250,
       };
+    self.Player1Score = 0;
+    self.Player2Score = 0;
     };
 
   return self;
