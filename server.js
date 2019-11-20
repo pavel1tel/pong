@@ -15,7 +15,6 @@ const path = require('path');
 const io = require('socket.io').listen(server);
 app.use(express.static('public'));
 let SOCKET_LIST = {};
-let PLAYER_LIST = {};
 let ball = Ball();
 ball.setAcc();
 
@@ -26,17 +25,26 @@ app.get('/', (req, res) => {
 });
 
 
+Player.list = {};
 io.on('connection', socket => {
-  console.log('a user connected');
   socket.id = Math.random();
-  SOCKET_LIST[socket.id] = socket;
-  let ball = Ball();
+  if ( Object.keys(SOCKET_LIST).length < 2 ) {
+    SOCKET_LIST[socket.id] = socket;
+  };
   let player = Player(socket.id, player_counter);
   player_counter++;
-  PLAYER_LIST[player.id] = player;
+  Player.list[player.id] = player;
+  Ball.player_list = Player.list;
   socket.on('disconnect', () => {
-    delete SOCKET_LIST[socket.id];
-    delete PLAYER_LIST[player.id];
+    player_counter = 0;
+    for ( let id in SOCKET_LIST ){
+      let socket = SOCKET_LIST[id];
+      socket.emit("Over");
+      socket.disconnect(true);
+      delete SOCKET_LIST[id];
+    };
+    player.onDisconnect();
+    ball.reset();
   });
 
   socket.on('keyPressed', (data) => {
@@ -51,33 +59,21 @@ io.on('connection', socket => {
 
 
 setInterval(() => {
-  let pack = {}; 
-  let pack_player = [];
-  for (let id in PLAYER_LIST){
-    let player = PLAYER_LIST[id];
-    ball.collision = () => {
-      let deltaX = ball.pos.x - Math.max(player.pos.x, Math.min(ball.pos.x, player.pos.x + player.width));
-      let deltaY = ball.pos.y - Math.max(player.pos.y, Math.min(ball.pos.y, player.pos.y + player.height));
-      if ((Math.pow(deltaX, 2) + Math.pow(deltaY, 2))< Math.pow(ball.radius, 2)){
-        ball.acc.x *= -1;
-      };
+  if ( player_counter < 2 ) {
+    for (let id in SOCKET_LIST){
+      let socket = SOCKET_LIST[id];
+      socket.emit('Waiting');
+      return;
     };
-    ball.collision();
-    player.updatePosition();
-    pack_player.push({
-      self : player,
-    })
+  }
+  if (Object.keys(SOCKET_LIST).length === 2 ){
+    let pack = {}; 
+    pack.players = Player.update();
+    pack.ball = ball.update();
+    for (let id of Object.keys(SOCKET_LIST)){
+      let socket = SOCKET_LIST[id];
+      socket.emit('newPosition', pack);
+    };
+    return;
   };
-  if ( Object.keys(PLAYER_LIST).length >= 2 ) {
-    ball.start = true;
-  };
-
-  
-  ball.out();
-  pack.players = pack_player;
-  pack.ball = ball.update();
-  for (let id in SOCKET_LIST){
-    let socket = SOCKET_LIST[id];
-    socket.emit('newPosition', pack);
-  };
-  }, 1000/40);
+}, 1000/40);

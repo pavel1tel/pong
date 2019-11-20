@@ -11,7 +11,38 @@ function setup(){
   createCanvas(CANVAS_WITDTH, CANVAS_HEIGHT);
   for (let y = dSize/2; y<CANVAS_HEIGHT; y+=dSize*2) {
     dots.push(createVector(width/2-dSize/2, y));
-  }
+  };
+
+  socket.on('Waiting', () => {
+    noStroke();
+    fill(255,100);
+    background(0);
+    drawText();
+
+    function drawText() {
+      background(0);
+      textSize(40);
+      fill(255);
+      text("Waiting for second player", CANVAS_WITDTH/2, CANVAS_HEIGHT/2);
+      textAlign(CENTER);
+    }
+  });
+
+  socket.on("Over", () => {
+    noStroke();
+    fill(255);
+    background(0);
+    drawText();
+
+    function drawText() {
+      background(0);
+      textSize(40);
+      fill(255);
+      textAlign(CENTER);
+      text("Game Over", CANVAS_WITDTH/2, CANVAS_HEIGHT/2);
+    }
+  })
+
   socket.on('newPosition', data => {
     noStroke();
     fill(255,100);
@@ -19,7 +50,7 @@ function setup(){
     drawSqueres();
     drawPlayers();
     drawBall();
-
+    drawScores();
 
     function drawSqueres () {
       for (let i = 0; i<dots.length; i++){
@@ -40,8 +71,15 @@ function setup(){
     function drawBall () {
       noStroke();
       fill(255);
-      console.log(data);
       ellipse(data.ball.pos.x, data.ball.pos.y, data.ball.radius);
+    }
+
+    function drawScores () {
+      noStroke();
+      fill(255);
+      textSize(15);
+      text(data.ball.scores.Player1Score, CANVAS_WITDTH/4, 25);
+      text(data.ball.scores.Player2Score, CANVAS_WITDTH*3/4, 25);
     }
   });
 };

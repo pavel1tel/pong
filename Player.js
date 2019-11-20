@@ -25,7 +25,23 @@ function Player (id, number) {
       };
 		};
 	};
+  self.onDisconnect = () => {
+    Player.list = {};
+  }
 
+  Player.update = () => {
+    let pack_player = [];
+    for (let id in Player.list){
+      let player = Player.list[id];
+      player.updatePosition();
+      pack_player.push({
+        self : player,
+      })
+    };
+    return pack_player;
+  };
+
+  Player.list[self.id] = self;
 	return self;
 };
 
