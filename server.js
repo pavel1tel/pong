@@ -4,11 +4,11 @@ const { Player } = require("./Player.js");
 const { Ball } = require("./Ball.js")
 const express = require('express');
 const app = express();
-const port = 3000;
 let player_counter = 0;
+const PORT = process.env.PORT || 3000;
 
-const server = app.listen(process.env.port || port, () => {
-  console.log('Server running on port ' + port);
+const server = app.listen(PORT, () => {
+  console.log('Server running on port ' + PORT);
 });
 
 const path = require('path');

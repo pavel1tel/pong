@@ -1,4 +1,5 @@
-const socket = io('http://localhost:3000');
+var HOST = location.origin.replace(/^http/, 'ws');
+const socket = io(HOST);
 const CANVAS_HEIGHT = 500;
 const CANVAS_WITDTH = 800;
 const dSize = 10;
