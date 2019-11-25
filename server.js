@@ -38,7 +38,7 @@ io.on('connection', socket => {
   Ball.player_list = Player.list;
 
   function restart() {
-  player_counter = 0;
+    player_counter = 0;
     for ( let id in SOCKET_LIST ){
       let socket = SOCKET_LIST[id];
       socket.emit("Over");
@@ -46,14 +46,15 @@ io.on('connection', socket => {
       delete SOCKET_LIST[id];
     };
     player.onDisconnect();
+    Ball.player_list = {};
     ball.reset();
   };
-  
+
   socket.on('disconnect', () => {
     restart();
   });
 
-  socket.on('keyPressed', (data) => {
+  socket.on('keyPressed', data => {
     if (data.inputId === 'down'){
       player.pressingDown = data.state;
     }else if (data.inputId === 'up'){
@@ -61,6 +62,13 @@ io.on('connection', socket => {
     };
   });
 
+  socket.on('Touch', data => {
+    player.touchUpdate(data);
+  })
+
+  socket.on('Restart', data => {
+    ball.reset();
+  });
 }); 
 
 

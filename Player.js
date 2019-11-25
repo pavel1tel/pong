@@ -41,6 +41,17 @@ function Player (id, number) {
     return pack_player;
   };
 
+  self.touchUpdate = data => {
+    if(data.y >= 420) {
+      self.pos.y = 420;
+      return;
+    }else if(data.y <= 0){
+      self.pos.y = 0;
+      return
+    }
+    self.pos.y = data.y;
+  }
+
   Player.list[self.id] = self;
 	return self;
 };

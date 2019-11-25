@@ -6,7 +6,7 @@ const dSize = 10;
 const dots = [];
 
 function restart () {
-  console.log("restart");
+  socket.emit("Restart");
 }
 
 function setup(){
@@ -82,26 +82,38 @@ function setup(){
     function drawScores () {
       noStroke();
       fill(255);
-      textSize(15);
-      text(data.ball.scores.Player1Score, CANVAS_WITDTH/4, 25);
-      text(data.ball.scores.Player2Score, CANVAS_WITDTH*3/4, 25);
+      textSize(40);
+      text(data.ball.scores.Player1Score, CANVAS_WITDTH/4, 40 * 1.5);
+      text(data.ball.scores.Player2Score, CANVAS_WITDTH*3/4, 40 * 1.5);
     }
   });
 };
+if(!mobilecheck()) {
+  document.onkeydown = event => {
+    if(event.keyCode === 83){ //s
+      socket.emit('keyPressed', {inputId : 'down', state : true});
+    }else if(event.keyCode === 87) { //w
+      socket.emit('keyPressed', {inputId : 'up', state : true});
+    };
+  }; 
 
-document.onkeydown = event => {
-  if(event.keyCode === 83){ //s
-    socket.emit('keyPressed', {inputId : 'down', state : true});
-  }else if(event.keyCode === 87) { //w
-    socket.emit('keyPressed', {inputId : 'up', state : true});
-  };
-}; 
-
-document.onkeyup = event => {
-  if(event.keyCode === 83){ //s
-    socket.emit('keyPressed', {inputId : 'down', state : false});
-  }else if(event.keyCode === 87) { //w
-    socket.emit('keyPressed', {inputId : 'up', state : false});
-  };
-}; 
+  document.onkeyup = event => {
+    if(event.keyCode === 83){ //s
+      socket.emit('keyPressed', {inputId : 'down', state : false});
+    }else if(event.keyCode === 87) { //w
+      socket.emit('keyPressed', {inputId : 'up', state : false});
+    };
+  }; 
+}else {
+  document.addEventListener("touchstart", touchHandler);
+  document.addEventListener("touchmove", touchHandler);
+  function touchHandler(e) {
+    if(e.touches) {
+        let output = document.getElementById("p");
+        playerX = e.touches[0].pageX;
+        playerY = e.touches[0].pageY;
+        socket.emit('Touch', {y : playerY});
+    }
+}
+}
 

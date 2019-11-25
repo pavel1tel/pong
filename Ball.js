@@ -7,11 +7,12 @@ function Ball () {
     },
     radius : 20,
     speed : {
-      x : 25,
-      y : 20,
+      x : 1.5,
+      y : 1.5,
     },
     Player1Score : 0,
     Player2Score : 0,
+    collisioned : false,
   };
 
   self.setAcc = (x, y) => {
@@ -37,8 +38,8 @@ function Ball () {
       if ( self.pos.y < self.radius || self.pos.y > 500 - self.radius ) {
         self.acc.y *= -1;
       };
-      self.pos.x += self.acc.x;
-      self.pos.y += self.acc.y;
+      self.pos.x += self.acc.x*self.speed.x;
+      self.pos.y += self.acc.y * self.speed.y;
       self.out();
       self.collision();
     };
@@ -55,22 +56,26 @@ function Ball () {
       self.Player1Score++;  
       self.setAcc();
       self.pos = { x : 400, y : 250 };
-    }
+    };
   };
 
   self.collision = () => {
-    for (let id in Ball.player_list){
-      let player = Ball.player_list[id];
-      let deltaX = self.pos.x - Math.max(player.pos.x, Math.min(self.pos.x, player.pos.x + player.width));
-      let deltaY = self.pos.y - Math.max(player.pos.y, Math.min(self.pos.y, player.pos.y + player.height));
-      if ((Math.pow(deltaX, 2) + Math.pow(deltaY, 2))< Math.pow(self.radius, 2)){
-        self.acc.x *= -1;
+    if (!self.collisioned){
+      for (let id in Ball.player_list){
+        let player = Ball.player_list[id];
+        let deltaX = self.pos.x - Math.max(player.pos.x, Math.min(self.pos.x, player.pos.x + player.width));
+        let deltaY = self.pos.y - Math.max(player.pos.y, Math.min(self.pos.y, player.pos.y + player.height));
+        if ((Math.pow(deltaX, 2) + Math.pow(deltaY, 2))< Math.pow(self.radius, 2)){
+          self.acc.x *= -1;
+          self.collisioned = true;
+        };
       };
+    }else  if (self.pos.x >= 100 && self.pos.x <= 700){
+      self.collisioned = false;
     };
   };
 
   self.reset = () => {
-    Ball.player_list = {};
     self.start = false;
     self.pos = {
       x : 400,
